@@ -13,11 +13,9 @@ void print_float (float number, uint8_t action) {
     char c = '\0';
 
     /* USE SPRINT F TO BUILD THE ARRAY OF ASCII CHARACTERS */
-    sprintf((char *)temp_buffer, "%.4f", number);   //f tells the function we want to print a float value
+    sprintf(temp_buffer, "%.4f", number);   //f tells the function we want to print a float value
 
-
-    HAL_UART_Transmit(&huart1, (uint8_t *)&temp_buffer, sizeof(temp_buffer), HAL_MAX_DELAY);
-
+    HAL_UART_Transmit(&huart1, (uint8_t *) temp_buffer, sizeof(temp_buffer), HAL_MAX_DELAY);
 
     /* CHECK TO SEE IF THE USER WISHES TO CREATE A NEW LINE */
     if(action == LF) {
@@ -76,7 +74,6 @@ void PrintUnsignedDecimal (uint16_t number, uint8_t action) {
     char temphex[5];        //Define the array that will hold the ASCII values
     char c = '\r';
     uint8_t i;                
-    uint16_t j=0;
     uint8_t decimal_count;    //This is how many digits are written
 
     /* USE SPRINT F TO BUILD THE ARRAY OF ASCII CHARACTERS */
@@ -135,7 +132,7 @@ void InsertLineFeed( uint8_t line_feeds ) {
     
     for(i = 0; i < line_feeds; i++){
         HAL_UART_Transmit(&huart1,(uint8_t *) &c, (uint16_t) 0x01, HAL_MAX_DELAY);
-        c = "\n"; 
+        c = '\n'; 
         HAL_UART_Transmit(&huart1,(uint8_t *) &c, (uint16_t) 0x01, HAL_MAX_DELAY);
     }
 }

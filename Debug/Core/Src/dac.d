@@ -1,4 +1,4 @@
-Core/Src/console.o: ../Core/Src/console.c ../Core/Inc/console.h \
+Core/Src/dac.o: ../Core/Src/dac.c ../Core/Inc/dac.h \
  ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal.h \
  ../Core/Inc/stm32f1xx_hal_conf.h \
  ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_rcc.h \
@@ -29,11 +29,9 @@ Core/Src/console.o: ../Core/Src/console.c ../Core/Inc/console.h \
  ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_spi.h \
  ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_tim.h \
  ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_tim_ex.h \
- ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_uart.h \
- ../Core/Inc/uart.h ../Core/Inc/main.h ../Core/Inc/timer.h \
- ../Core/Inc/console.h ../Core/Inc/dac.h
+ ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_uart.h
 
-../Core/Inc/console.h:
+../Core/Inc/dac.h:
 
 ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal.h:
 
@@ -96,13 +94,3 @@ Core/Src/console.o: ../Core/Src/console.c ../Core/Inc/console.h \
 ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_tim_ex.h:
 
 ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_uart.h:
-
-../Core/Inc/uart.h:
-
-../Core/Inc/main.h:
-
-../Core/Inc/timer.h:
-
-../Core/Inc/console.h:
-
-../Core/Inc/dac.h:

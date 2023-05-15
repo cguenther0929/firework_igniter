@@ -9,4 +9,4 @@ Bare metal -- application written in C.
    
 
 ## Tagged Versions 
-  
+v0.0.1 -- The console is up and working.  Routines for getting unsigned decimal and float numbers from the user are working.  Through the console, the fuse current and DAC voltage can be appropriately set -- DAC output working.  The health LED is being driven appropriately.   

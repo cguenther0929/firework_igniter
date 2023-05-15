@@ -13,13 +13,16 @@
 #ifndef __CONSOLE_H
 #define __CONSOLE_H
 
+#include "stm32f1xx_hal.h"
 #include <stdint.h>
 #include <stdbool.h>
 #include <stdio.h>      // Mostly needed for sscanf()
 #include "uart.h"
 #include "main.h"
+#include "dac.h"
 
 extern UART_HandleTypeDef huart1;
+extern DAC_HandleTypeDef hdac;
 
 // TODO Update all comment BLOCKS!!
 // TODO Reference console.c

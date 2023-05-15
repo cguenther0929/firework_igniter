@@ -126,6 +126,7 @@ int main(void)
 
   // Must use Base Start IT if using interrupts
   HAL_TIM_Base_Start_IT(&htim6);
+  HAL_DAC_Start(&hdac, DAC_CHANNEL_1);
 
   HAL_UART_Receive_IT(&huart1, &uart.rxchar, 1);
   
@@ -151,7 +152,7 @@ int main(void)
 	    if(time.flag_500ms_tick) {
 	      time.flag_500ms_tick = false;
 	      HAL_GPIO_TogglePin(HLTH_LED_GPIO_Port, HLTH_LED_Pin);
-        print_string("1s interrupt",LF);
+        print_string(".",0);
 
 	    }
 
@@ -570,9 +571,9 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
     uart.rxbuf[uart.producer_index] = uart.rxchar;          // Load this byte into rx buffer  
     uart.byte_counter++;                                                   //Increase data counter
     (uart.producer_index >= MAX_RX_BUF_INDEX) ? (uart.producer_index = 0):(uart.producer_index++);       
-        
-		print_string("Character Received: ",0);
-		print_string(&uart.rxchar,LF);
+        //TODO remove the following 
+		// print_string("Character Received: ",0);
+		// print_string(&uart.rxchar,LF);
 		// Restart the interrupt routine
 		HAL_UART_Receive_IT(&huart1, &uart.rxchar, 1);
 	}

@@ -13,26 +13,19 @@
 
 #include "console.h"            //Include file to support console
 
-struct UARTMembers uart;        
+struct UARTMembers uart;
 
 
 uint8_t getNumber_u8 ( void ) {
-    uint8_t number      = 0;
+    int number      = 0;
     uint8_t timeout     = 0;
 
-
     ResetRxBuffer();
-    print_string("Here1: ",LF);
-
-    // HAL_UART_Receive(&huart1, &uart.rxbuf, MAX_RX_BUF_INDEX, 1000000);
-    print_string("Here1: ",LF);
     
     uart.rxchar = '\0';
     while(uart.rxchar == '\0'){}                   // Wait for keyboard input 
     
     while (timeout < 20) {
-        
-        
         if(uart.rxchar == ENTER_KEY) break;
 
         blockingDelay100ms(1);
@@ -42,35 +35,39 @@ uint8_t getNumber_u8 ( void ) {
     sscanf(uart.rxbuf,"%d",&number);
 
     print_string("Number Received: ",0);
-    PrintUnsignedDecimal(number, LF);
+    PrintUnsignedDecimal((uint8_t)number, LF);
 
     ResetRxBuffer();
     return(number);
 }
 
 
-// float getNumber_float( void ) {
-//     float number        = 0;
-//     uint8_t timeout     = 0;
+float getNumber_float( void ) {
+    float number        = 0;
+    uint8_t timeout     = 0;
     
-//     ResetRxBuffer();
+    ResetRxBuffer();
     
-//     uart.rxchar = '\0';
-//     while(uart.rxchar == '\0'){}                   // Wait for keyboard input 
+    uart.rxchar = '\0';
+    while(uart.rxchar == '\0'){}                   // Wait for keyboard input 
     
-//     while (timeout < 80) {
+    while (timeout < 80) {
         
-//         if(uart.rxchar == ENTER_KEY) break;
+        if(uart.rxchar == ENTER_KEY) break;
 
-//         blockingDelay100ms(1);
-//         timeout++;
-//     }
+        blockingDelay100ms(1);
+        timeout++;
+    }
 
-//     sscanf(uart.rxbuf,"%f.3",&number);
+    sscanf(uart.rxbuf,"%f.3",&number);
+    // print_string("Float Number Enterd: ",LF);
+    // print_float(number, LF);
+    
+    ResetRxBuffer();
 
-//     return(number);
+    return(number);
 
-// }
+}
 
 void MainMenu( void ) {
     /*
@@ -113,6 +110,8 @@ void MainMenu( void ) {
      */
 
 	uint8_t     usr_number_u8       = 0;        // Number user has entered will be stored here
+    uint16_t    dac_data_value      = 0;
+    float       temp_float          = 0.0;
     
     uart.rxchar = '\0';                  
     ResetTerminal();                            // Clear all the contents on the terminal
@@ -124,30 +123,60 @@ void MainMenu( void ) {
 
     while(usr_number_u8 != 99) {
         print_string("1 --- Manipulate DAC output.",LF);
+        print_string("2 --- Set fuse current.",LF);
+        print_string("3 --- Not implemented.",LF);
         
-        print_string("99 -- Exit menu.",LF);  InsertLineFeed(2);
+        print_string("99 -- Exit menu.",LF);  
+        InsertLineFeed(2);
         
         print_string("Enter Selection:  ",0);
         usr_number_u8 = getNumber_u8();
 
        
         switch(usr_number_u8) {
-            
+            /* Manipulate DAC Voltage Output */
             case 1:
-                ClearScreen();
-                CursorTopLeft();
-                InsertLineSeparator();
-                print_string("Not implemented yet",LF);
-                
+                print_string("What voltage shall the DAC be set to: ",0);
+                temp_float = getNumber_float();
+            	dac_data_value = get_dac_data_value (temp_float);
+                HAL_DAC_SetValue(&hdac, DAC_CHANNEL_1, DAC_ALIGN_12B_R, (uint32_t)dac_data_value);ClearScreen();
             break;
+            
+            /* Set fuse current */
+            case 2:
+                print_string("What shall the fuse current be (mA): ",0);
+                temp_float = getNumber_float();
+                temp_float = (float)(temp_float/1000.0*0.5);                  // Multiply by 0.5 to get voltage
+                print_string("Required DAC Voltage: ",0);
+                print_float(temp_float,LF);
+
+            	dac_data_value = get_dac_data_value (temp_float);
+                
+                HAL_DAC_SetValue(&hdac, DAC_CHANNEL_1, DAC_ALIGN_12B_R, (uint32_t)dac_data_value);
+            	
+            break;
+
+            case 3:
+                print_string("Not implemented...",LF);
+                
+            	
+            break;
+
+
 
             case 99:
                 ResetTerminal();              //Leaving menu, so clear the screen so not to confuse user
                 blockingDelay10ms(1);
                 CursorTopLeft();        //Make sure the cursor is in the Top Left position
                 blockingDelay10ms(1);
+                usr_number_u8 = 99;
             break;
+
+            default:
+                usr_number_u8 = 99;
         }   //END Switch(usr_number_u8)
     }  //END while(glbinfo.rxchar != 99)
+
+    print_string("Leaving console.",LF);
 
 }

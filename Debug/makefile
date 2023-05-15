@@ -61,7 +61,7 @@ main-build: firework_igniter.elf secondary-outputs
 
 # Tool invocations
 firework_igniter.elf: $(OBJS) $(USER_OBJS) C:\Users\clint\STM32CubeIDE\workspace_1.6.1\firework_igniter\STM32F105RBTX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "firework_igniter.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m3 -T"C:\Users\clint\STM32CubeIDE\workspace_1.6.1\firework_igniter\STM32F105RBTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="firework_igniter.map" -Wl,--gc-sections -static --specs=nano.specs -mfloat-abi=soft -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+	arm-none-eabi-gcc -o "firework_igniter.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m3 -T"C:\Users\clint\STM32CubeIDE\workspace_1.6.1\firework_igniter\STM32F105RBTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="firework_igniter.map" -Wl,--gc-sections -static -u_print_float --specs=nano.specs -mfloat-abi=soft -mthumb -u _printf_float -u _scanf_float -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 
