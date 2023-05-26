@@ -1,0 +1,4 @@
+max14662.c:18:6:init_max14662	4	static
+max14662.c:98:6:anlg_sw_all_off	16	static
+max14662.c:148:6:set_anlg_sw_on	24	static
+max14662.c:205:6:anlg_sw_all_on	16	static

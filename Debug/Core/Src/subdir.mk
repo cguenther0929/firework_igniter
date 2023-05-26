@@ -5,9 +5,11 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 C_SRCS += \
+../Core/Src/ad7888.c \
 ../Core/Src/console.c \
 ../Core/Src/dac.c \
 ../Core/Src/main.c \
+../Core/Src/max14662.c \
 ../Core/Src/stm32f1xx_hal_msp.c \
 ../Core/Src/stm32f1xx_it.c \
 ../Core/Src/syscalls.c \
@@ -16,9 +18,11 @@ C_SRCS += \
 ../Core/Src/uart.c 
 
 OBJS += \
+./Core/Src/ad7888.o \
 ./Core/Src/console.o \
 ./Core/Src/dac.o \
 ./Core/Src/main.o \
+./Core/Src/max14662.o \
 ./Core/Src/stm32f1xx_hal_msp.o \
 ./Core/Src/stm32f1xx_it.o \
 ./Core/Src/syscalls.o \
@@ -27,9 +31,11 @@ OBJS += \
 ./Core/Src/uart.o 
 
 C_DEPS += \
+./Core/Src/ad7888.d \
 ./Core/Src/console.d \
 ./Core/Src/dac.d \
 ./Core/Src/main.d \
+./Core/Src/max14662.d \
 ./Core/Src/stm32f1xx_hal_msp.d \
 ./Core/Src/stm32f1xx_it.d \
 ./Core/Src/syscalls.d \
@@ -45,7 +51,7 @@ Core/Src/%.o: ../Core/Src/%.c Core/Src/subdir.mk
 clean: clean-Core-2f-Src
 
 clean-Core-2f-Src:
-	-$(RM) ./Core/Src/console.d ./Core/Src/console.o ./Core/Src/dac.d ./Core/Src/dac.o ./Core/Src/main.d ./Core/Src/main.o ./Core/Src/stm32f1xx_hal_msp.d ./Core/Src/stm32f1xx_hal_msp.o ./Core/Src/stm32f1xx_it.d ./Core/Src/stm32f1xx_it.o ./Core/Src/syscalls.d ./Core/Src/syscalls.o ./Core/Src/sysmem.d ./Core/Src/sysmem.o ./Core/Src/system_stm32f1xx.d ./Core/Src/system_stm32f1xx.o ./Core/Src/uart.d ./Core/Src/uart.o
+	-$(RM) ./Core/Src/ad7888.d ./Core/Src/ad7888.o ./Core/Src/console.d ./Core/Src/console.o ./Core/Src/dac.d ./Core/Src/dac.o ./Core/Src/main.d ./Core/Src/main.o ./Core/Src/max14662.d ./Core/Src/max14662.o ./Core/Src/stm32f1xx_hal_msp.d ./Core/Src/stm32f1xx_hal_msp.o ./Core/Src/stm32f1xx_it.d ./Core/Src/stm32f1xx_it.o ./Core/Src/syscalls.d ./Core/Src/syscalls.o ./Core/Src/sysmem.d ./Core/Src/sysmem.o ./Core/Src/system_stm32f1xx.d ./Core/Src/system_stm32f1xx.o ./Core/Src/uart.d ./Core/Src/uart.o
 
 .PHONY: clean-Core-2f-Src
 

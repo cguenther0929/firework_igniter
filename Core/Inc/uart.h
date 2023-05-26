@@ -15,9 +15,11 @@
 
 #include "stm32f1xx_hal.h"
 extern UART_HandleTypeDef huart1;
+extern UART_HandleTypeDef huart2;
 
 // ToDO Cleanup comment blocks and header def
 // TODO see console.c or .h
+// TODO Cleanup comments down below
 
 /* Linefeed and Enter Key */
 #define LF                          1           //Define short hand for a line feed
@@ -27,7 +29,23 @@ extern UART_HandleTypeDef huart1;
 
 /* Message Buffer Sizes */
 #define MAX_RX_BUF_INDEX            32                      // Define array element size 
-#define MAX_ELEMENTS                MAX_RX_BUF_INDEX + 1    // Number of elements that can be stored in buffer
+#define MAX_ELEMENTS                (MAX_RX_BUF_INDEX + 1)    // Number of elements that can be stored in buffer
+
+/* Message IDs */
+#define ID_FUSESTATUS               0x01
+#define ID_IGNITE_FUSE              0x02
+
+
+/* Message Framing */
+#define RXSOF                       0xFC        //Start of frame identifier for message from panel to PC
+#define TXSOF                       0xF2
+#define FRAMEEND                    0xF6        //End of frame identifier
+
+/* Message States */
+#define STATESTART                  0x01        // State variable to indicate we are looking for SOF via UART 
+#define SOFRXED                     0x02        // State variable to indicate that we have received the start of frame byte  
+#define IDRXED                      0x03        // State variable to indicate that we have received the ID byte 
+#define LENRXED                     0x04        // State variable to indicate that we have received the length byte 
 
 /*!
  * Structure for UART members
@@ -47,16 +65,16 @@ struct UARTMembers {
 
     bool        errorflag;                      // Currently used to indicate out-of-bounds range request on power 10 lookup table
     bool        validmsg;                       // Flag to mark that a valid message has been received
+    bool        inmenu;                         // This flag will indicate if we're in the menu
 };
 
+
 /**
- * FUNCTION: void print_float (float number, uint8_t action)
- * --------------------
- * Leverage built-in sprintf to print
- * a float value to the terminal.  
- *
- * returns: Nothing 
- */
+* @brief Print float number 
+* @param number: float number to print
+* @param action: LF for line feed or 0 for no line feed
+* @retval None
+*/
 void print_float (float number, uint8_t action);
 
 /**
@@ -85,6 +103,10 @@ void PrintUnsignedDecimal (uint16_t number, uint8_t action);
  * returns: Nothing 
  */
 void print_16b_binary_rep (uint16_t number, uint8_t action);
+
+
+//TODO need to comment
+void print_8b_binary_rep (uint8_t number, uint8_t action);
 
 /*
  * Function: void InsertLineFeed( uint8_t line_feeds )
@@ -167,5 +189,23 @@ void ClearLine( void );
  * returns: Nothing 
  */
 void ResetRxBuffer( void );
+
+//TODO need to comment 
+void HandleByte( void );
+
+//TODO clean up comment
+/*
+ * Function: void ProcessMessage( void )
+ * --------------------
+ * This function will execute upon the HandleByte
+ * stat machine determining a full and valid message 
+ * has been received.  
+ *
+ * returns: Nothing 
+ */
+void ProcessMessage( void ); 
+
+//TODO need to cleanup
+void xbee_tx(const char *y);
 
 #endif /* INC_UART_H_ */

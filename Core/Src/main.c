@@ -27,7 +27,8 @@
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
 struct timing       time;
-struct UARTMembers  uart;     
+struct UARTMembers  uart; 
+ad7888              a2d;    
 
 /* USER CODE END PTD */
 
@@ -86,7 +87,7 @@ static void MX_TIM6_Init(void);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-
+  
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -103,12 +104,21 @@ int main(void)
   time.ticks100ms = 0;
   time.ticks500ms = 0;
 
+  init_ad7888 (&a2d); 
+
   /* USER CODE END Init */
 
   /* Configure the system clock */
   SystemClock_Config();
 
   /* USER CODE BEGIN SysInit */
+  uart.errorflag      = false;
+  uart.validmsg       = false;
+  uart.msg_state      = STATESTART;
+  uart.len_verify     = 0;                        // Initialize length verify counter to 0
+  uart.producer_index = 0;                        // Initialize consumer index
+  uart.consumer_index = 0;                        // Initialize producer index
+  uart.inmenu         = false;                    // Will not start out in console menu
 
   /* USER CODE END SysInit */
 
@@ -128,7 +138,8 @@ int main(void)
   HAL_TIM_Base_Start_IT(&htim6);
   HAL_DAC_Start(&hdac, DAC_CHANNEL_1);
 
-  HAL_UART_Receive_IT(&huart1, &uart.rxchar, 1);
+  HAL_UART_Receive_IT(&huart1, &uart.rxchar, 1);  // UART to console interface
+  HAL_UART_Receive_IT(&huart2, &uart.rxchar, 1);  // UART to XBEE interface
   
   /* USER CODE END 2 */
 
@@ -137,12 +148,30 @@ int main(void)
   while (1)
   {
 
+    /**
+     * Message handling
+     */
+    if (uart.byte_counter >= MAX_RX_BUF_INDEX) {
+      ResetRxBuffer();                        //Something went wrong, reset the RX buffer.
+    }
+    else if(uart.consumer_index != uart.producer_index) {             //We have unprocessed data when indices do not agree
+      HandleByte();
+    }
+
+    if(uart.validmsg == true) {     //A valid message confirmed in buffer
+        uart.validmsg = false;      //Avoid diving into ProcessMessage for no reason
+        ProcessMessage();
+    }
+
+
+
 	  if(time.flag_10ms_tick) {
 		  time.flag_10ms_tick = false;
-      if(uart.rxchar == 'z') {
-        MainMenu();
-        uart.rxchar = '\0';
-      }
+      //TODO need to remove
+      // if(uart.rxchar == 'z') {
+      //   MainMenu();
+      //   uart.rxchar = '\0';
+      // }
 	  }
 
 	  if(time.flag_100ms_tick) {
@@ -354,7 +383,7 @@ static void MX_SPI1_Init(void)
   hspi1.Init.CLKPolarity = SPI_POLARITY_LOW;
   hspi1.Init.CLKPhase = SPI_PHASE_1EDGE;
   hspi1.Init.NSS = SPI_NSS_SOFT;
-  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_128;
+  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_256;
   hspi1.Init.FirstBit = SPI_FIRSTBIT_MSB;
   hspi1.Init.TIMode = SPI_TIMODE_DISABLE;
   hspi1.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
@@ -423,7 +452,7 @@ static void MX_USART1_UART_Init(void)
 
   /* USER CODE END USART1_Init 1 */
   huart1.Instance = USART1;
-  huart1.Init.BaudRate = 115200;
+  huart1.Init.BaudRate = 57600;
   huart1.Init.WordLength = UART_WORDLENGTH_8B;
   huart1.Init.StopBits = UART_STOPBITS_1;
   huart1.Init.Parity = UART_PARITY_NONE;
@@ -495,8 +524,10 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(GPIOC, EXT_LED_1_Pin|EXT_LED_2_Pin|EXT_LED_3_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, CH1_8_ANSW_CS_n_Pin|CH1_8_ADC_CS_n_Pin|CH9_12_ADC_CS_n_Pin|CH9_12_ANSW_CS_n_Pin
-                          |XB_RST_n_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, CH1_8_ANSW_CS_n_Pin|CH1_8_ADC_CS_n_Pin|CH9_16_ADC_CS_n_Pin|CH9_16_ANSW_CS_n_Pin, GPIO_PIN_SET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(XB_RST_n_GPIO_Port, XB_RST_n_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pins : HW_REV_0_Pin HW_REV_1_Pin HW_REV_2_Pin PBTN_1_Pin
                            pbtn_2_Pin */
@@ -513,9 +544,9 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : CH1_8_ANSW_CS_n_Pin CH1_8_ADC_CS_n_Pin CH9_12_ADC_CS_n_Pin CH9_12_ANSW_CS_n_Pin
+  /*Configure GPIO pins : CH1_8_ANSW_CS_n_Pin CH1_8_ADC_CS_n_Pin CH9_16_ADC_CS_n_Pin CH9_16_ANSW_CS_n_Pin
                            XB_RST_n_Pin */
-  GPIO_InitStruct.Pin = CH1_8_ANSW_CS_n_Pin|CH1_8_ADC_CS_n_Pin|CH9_12_ADC_CS_n_Pin|CH9_12_ANSW_CS_n_Pin
+  GPIO_InitStruct.Pin = CH1_8_ANSW_CS_n_Pin|CH1_8_ADC_CS_n_Pin|CH9_16_ADC_CS_n_Pin|CH9_16_ANSW_CS_n_Pin
                           |XB_RST_n_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
@@ -566,16 +597,28 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
  *  @brief Handle UART RX interrupts 
  ***********************************************/
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
-	if(huart == &huart1) {
+	
+  /**
+   * Console UART Interface
+   * 
+   */
+  if(huart == &huart1) {
 
     uart.rxbuf[uart.producer_index] = uart.rxchar;          // Load this byte into rx buffer  
     uart.byte_counter++;                                                   //Increase data counter
     (uart.producer_index >= MAX_RX_BUF_INDEX) ? (uart.producer_index = 0):(uart.producer_index++);       
-        //TODO remove the following 
-		// print_string("Character Received: ",0);
-		// print_string(&uart.rxchar,LF);
-		// Restart the interrupt routine
 		HAL_UART_Receive_IT(&huart1, &uart.rxchar, 1);
+	}
+	
+  /**
+   * RF UART Interface 
+   */
+  else if(huart == &huart2) {
+
+    uart.rxbuf[uart.producer_index] = uart.rxchar;          // Load this byte into rx buffer  
+    uart.byte_counter++;                                                   //Increase data counter
+    (uart.producer_index >= MAX_RX_BUF_INDEX) ? (uart.producer_index = 0):(uart.producer_index++);       
+		HAL_UART_Receive_IT(&huart2, &uart.rxchar, 1);
 	}
 }
 

@@ -34,6 +34,8 @@ extern "C" {
 #include "timer.h"
 #include "uart.h"
 #include "console.h"
+#include "ad7888.h"
+#include "max14662.h"
 #include <stdbool.h>
 /* USER CODE END Includes */
 
@@ -109,10 +111,10 @@ void blockingDelay100ms( uint16_t ticks );
 #define CH1_8_ANSW_CS_n_GPIO_Port GPIOB
 #define CH1_8_ADC_CS_n_Pin GPIO_PIN_13
 #define CH1_8_ADC_CS_n_GPIO_Port GPIOB
-#define CH9_12_ADC_CS_n_Pin GPIO_PIN_14
-#define CH9_12_ADC_CS_n_GPIO_Port GPIOB
-#define CH9_12_ANSW_CS_n_Pin GPIO_PIN_15
-#define CH9_12_ANSW_CS_n_GPIO_Port GPIOB
+#define CH9_16_ADC_CS_n_Pin GPIO_PIN_14
+#define CH9_16_ADC_CS_n_GPIO_Port GPIOB
+#define CH9_16_ANSW_CS_n_Pin GPIO_PIN_15
+#define CH9_16_ANSW_CS_n_GPIO_Port GPIOB
 #define EXT_LED_3_Pin GPIO_PIN_6
 #define EXT_LED_3_GPIO_Port GPIOC
 #define XB_ON_Pin GPIO_PIN_5

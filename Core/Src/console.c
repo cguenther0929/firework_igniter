@@ -14,6 +14,7 @@
 #include "console.h"            //Include file to support console
 
 struct UARTMembers uart;
+ad7888       a2d;               //Type Def Struct AD7888
 
 
 uint8_t getNumber_u8 ( void ) {
@@ -111,6 +112,8 @@ void MainMenu( void ) {
 
 	uint8_t     usr_number_u8       = 0;        // Number user has entered will be stored here
     uint16_t    dac_data_value      = 0;
+    uint8_t     temp_u8             = 0;
+    bool        temp_bool           = 0;
     float       temp_float          = 0.0;
     
     uart.rxchar = '\0';                  
@@ -122,9 +125,15 @@ void MainMenu( void ) {
     blockingDelay10ms(1);
 
     while(usr_number_u8 != 99) {
+        InsertLineFeed(1);
+        InsertLineSeparator();
         print_string("1 --- Manipulate DAC output.",LF);
         print_string("2 --- Set fuse current.",LF);
-        print_string("3 --- Not implemented.",LF);
+        print_string("3 --- Turn particular analog sw ON.",LF);
+        print_string("4 --- Turn all analog sw OFF.",LF);
+        print_string("5 --- Get channel 1 of ADC.",LF);
+        print_string("6 --- Get channel 2 of ADC.",LF);
+
         
         print_string("99 -- Exit menu.",LF);  
         InsertLineFeed(2);
@@ -136,14 +145,22 @@ void MainMenu( void ) {
         switch(usr_number_u8) {
             /* Manipulate DAC Voltage Output */
             case 1:
+                InsertLineFeed(1);
+                InsertLineSeparator();
                 print_string("What voltage shall the DAC be set to: ",0);
                 temp_float = getNumber_float();
+                InsertLineFeed(1);
+                print_string("Setting DAC voltage to: ",0);
+                print_float(temp_float,LF);
+
             	dac_data_value = get_dac_data_value (temp_float);
-                HAL_DAC_SetValue(&hdac, DAC_CHANNEL_1, DAC_ALIGN_12B_R, (uint32_t)dac_data_value);ClearScreen();
+                HAL_DAC_SetValue(&hdac, DAC_CHANNEL_1, DAC_ALIGN_12B_R, (uint32_t)dac_data_value);
             break;
             
             /* Set fuse current */
             case 2:
+                InsertLineFeed(1);
+                InsertLineSeparator();
                 print_string("What shall the fuse current be (mA): ",0);
                 temp_float = getNumber_float();
                 temp_float = (float)(temp_float/1000.0*0.5);                  // Multiply by 0.5 to get voltage
@@ -157,8 +174,44 @@ void MainMenu( void ) {
             break;
 
             case 3:
-                print_string("Not implemented...",LF);
+                // print_string("Turning all analog SW ON.",LF);
+                // anlg_sw_all_on();
+                InsertLineFeed(1);
+                InsertLineSeparator();
+                print_string("Which switch would you like to enable:  ",0);
+                temp_u8 = getNumber_u8();
+
+                if(set_anlg_sw_on (temp_u8)) {
+                    print_string("Successful. Channel should be enabled.",LF);
+                }
+                else {
+                    print_string("Failed to set analog switch ON.",LF);
+                }
                 
+                
+            	
+            break;
+            
+            case 4:
+                print_string("Turning all analog SW OFF.",LF);
+                anlg_sw_all_off();
+                
+            	
+            break;
+            
+            case 5:
+                print_string("Getting channel 1 of ADC",LF);
+                temp_float = get_voltage (&a2d, 1);
+                print_string("ADC CH 1 Voltage: ",0);
+                print_float(temp_float,LF);
+            	
+            break;
+            
+            case 6:
+                print_string("Getting channel 2 of ADC",LF);
+                temp_float = get_voltage (&a2d, 2);
+                print_string("ADC CH 2 Voltage: ",0);
+                print_float(temp_float,LF);
             	
             break;
 
@@ -173,7 +226,7 @@ void MainMenu( void ) {
             break;
 
             default:
-                usr_number_u8 = 99;
+                usr_number_u8 = 0;
         }   //END Switch(usr_number_u8)
     }  //END while(glbinfo.rxchar != 99)
 

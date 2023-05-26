@@ -20,6 +20,8 @@
 #include "uart.h"
 #include "main.h"
 #include "dac.h"
+#include "max14662.h"
+#include "ad7888.h"
 
 extern UART_HandleTypeDef huart1;
 extern DAC_HandleTypeDef hdac;

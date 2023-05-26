@@ -31,7 +31,8 @@ Core/Src/console.o: ../Core/Src/console.c ../Core/Inc/console.h \
  ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_tim_ex.h \
  ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_uart.h \
  ../Core/Inc/uart.h ../Core/Inc/main.h ../Core/Inc/timer.h \
- ../Core/Inc/console.h ../Core/Inc/dac.h
+ ../Core/Inc/console.h ../Core/Inc/ad7888.h ../Core/Inc/max14662.h \
+ ../Core/Inc/dac.h
 
 ../Core/Inc/console.h:
 
@@ -104,5 +105,9 @@ Core/Src/console.o: ../Core/Src/console.c ../Core/Inc/console.h \
 ../Core/Inc/timer.h:
 
 ../Core/Inc/console.h:
+
+../Core/Inc/ad7888.h:
+
+../Core/Inc/max14662.h:
 
 ../Core/Inc/dac.h:
