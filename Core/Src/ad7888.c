@@ -21,7 +21,7 @@ void init_ad7888 (ad7888 * a2d) {
 }
 
 
-float get_voltage (ad7888 * a2d, uint8_t channel) {
+float get_voltage_mv (ad7888 * a2d, uint8_t channel) {
 
 
 //                          Array position [0]
@@ -56,7 +56,7 @@ float get_voltage (ad7888 * a2d, uint8_t channel) {
 
 
   HAL_GPIO_WritePin(CH1_8_ADC_CS_n_GPIO_Port, CH1_8_ADC_CS_n_Pin, GPIO_PIN_RESET);  //Drop CS line
-  HAL_Delay(CS_HAL_DELAY_uS);
+  HAL_Delay(CS_HAL_DELAY_mS);
   
   
   
@@ -68,8 +68,8 @@ float get_voltage (ad7888 * a2d, uint8_t channel) {
   //                               |                   |                        |                  |          Timeout in us   
   //                               |                   |                        |                  |             |
   ret = HAL_SPI_TransmitReceive(&hspi1, (uint8_t *)spi_tx_data, (uint8_t *) spi_rx_data, (uint16_t) 2, (uint32_t) 800);
-  HAL_Delay(CS_HAL_DELAY_uS);
-  HAL_Delay(CS_HAL_DELAY_uS);
+  HAL_Delay(CS_HAL_DELAY_mS);
+  HAL_Delay(CS_HAL_DELAY_mS);
   
   if(ret != HAL_OK){
     print_string("SPI Transmit Error",LF);
@@ -108,10 +108,10 @@ float get_voltage (ad7888 * a2d, uint8_t channel) {
 
   digital_result = (uint16_t)((spi_rx_data[0] << 8) | (spi_rx_data[1]));
 
-  print_string("The digital result: ", 0);
-  print_16b_binary_rep(digital_result, LF);
+  // print_string("The digital result: ", 0);
+  // print_16b_binary_rep(digital_result, LF);
 
-  voltage = (float)(digital_result * A2D_VOLTAGE_PER_BIT);
+  voltage = (float)(digital_result * A2D_VOLTAGE_PER_BIT * 1000); //Value in mV
 
   return voltage;
 }

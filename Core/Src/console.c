@@ -14,7 +14,9 @@
 #include "console.h"            //Include file to support console
 
 struct UARTMembers uart;
-ad7888       a2d;               //Type Def Struct AD7888
+ad7888       a2d;               // Struct for all things A2D related 
+fuse         fus;               // Struct for all things fuse related
+timing       tim;
 
 
 uint8_t getNumber_u8 ( void ) {
@@ -29,14 +31,15 @@ uint8_t getNumber_u8 ( void ) {
     while (timeout < 20) {
         if(uart.rxchar == ENTER_KEY) break;
 
-        blockingDelay100ms(1);
+        HAL_Delay(100);          // Delay in ms 
+        // blockingDelay100ms(1);  //TODO okay to remove?
         timeout++;
     }
 
     sscanf(uart.rxbuf,"%d",&number);
 
     print_string("Number Received: ",0);
-    PrintUnsignedDecimal((uint8_t)number, LF);
+    print_unsigned_decimal((uint8_t)number, LF);
 
     ResetRxBuffer();
     return(number);
@@ -56,7 +59,8 @@ float getNumber_float( void ) {
         
         if(uart.rxchar == ENTER_KEY) break;
 
-        blockingDelay100ms(1);
+        // blockingDelay100ms(1);       //TODO remove?
+        HAL_Delay(100);          // Delay in ms
         timeout++;
     }
 
@@ -110,19 +114,22 @@ void MainMenu( void ) {
      * 
      */
 
-	uint8_t     usr_number_u8       = 0;        // Number user has entered will be stored here
-    uint16_t    dac_data_value      = 0;
-    uint8_t     temp_u8             = 0;
-    bool        temp_bool           = 0;
-    float       temp_float          = 0.0;
+	uint8_t     usr_number_u8           = 0;        // Number user has entered will be stored here
+    uint16_t    dac_data_value          = 0;
+    uint16_t    temp_fuse_status_u16    = 0;
+    uint8_t     temp_u8                 = 0;
+    bool        temp_bool               = 0;
+    float       temp_float              = 0.0;
     
     uart.rxchar = '\0';                  
     ResetTerminal();                            // Clear all the contents on the terminal
 
     
-    blockingDelay10ms(1);
+    // blockingDelay10ms(1);
+    HAL_Delay(1);
     CursorTopLeft();
-    blockingDelay10ms(1);
+    HAL_Delay(1);
+    // blockingDelay10ms(1);
 
     while(usr_number_u8 != 99) {
         InsertLineFeed(1);
@@ -131,8 +138,10 @@ void MainMenu( void ) {
         print_string("2 --- Set fuse current.",LF);
         print_string("3 --- Turn particular analog sw ON.",LF);
         print_string("4 --- Turn all analog sw OFF.",LF);
-        print_string("5 --- Get channel 1 of ADC.",LF);
-        print_string("6 --- Get channel 2 of ADC.",LF);
+        print_string("5 --- Get voltage from A2D.",LF);
+        print_string("6 --- Get fuse status.",LF);
+        print_string("7 --- Ignite a fuse.",LF);
+
 
         
         print_string("99 -- Exit menu.",LF);  
@@ -174,8 +183,6 @@ void MainMenu( void ) {
             break;
 
             case 3:
-                // print_string("Turning all analog SW ON.",LF);
-                // anlg_sw_all_on();
                 InsertLineFeed(1);
                 InsertLineSeparator();
                 print_string("Which switch would you like to enable:  ",0);
@@ -200,28 +207,54 @@ void MainMenu( void ) {
             break;
             
             case 5:
-                print_string("Getting channel 1 of ADC",LF);
-                temp_float = get_voltage (&a2d, 1);
-                print_string("ADC CH 1 Voltage: ",0);
+                InsertLineFeed(1);
+                InsertLineSeparator();
+                print_string("Which channel of the A2D shall be sampled:  ",0);
+                temp_u8 = getNumber_u8();
+                
+                print_string("User elected to see channel: ",0);
+                print_unsigned_decimal(temp_u8,LF);
+                temp_float = get_voltage_mv (&a2d, temp_u8);
+                print_string("ADC Voltage: ",0);
                 print_float(temp_float,LF);
             	
             break;
             
             case 6:
-                print_string("Getting channel 2 of ADC",LF);
-                temp_float = get_voltage (&a2d, 2);
-                print_string("ADC CH 2 Voltage: ",0);
-                print_float(temp_float,LF);
-            	
+                InsertLineFeed(1);
+                InsertLineSeparator();
+                temp_fuse_status_u16 = get_status_all_fuses(&fus);
+                print_string("Fuse Status U16: ",0);
+                print_16b_binary_rep(temp_fuse_status_u16,LF);
             break;
+            
+            case 7:
+                InsertLineFeed(1);
+                InsertLineSeparator();
+                
+                print_string("Enter fuse to be lit: ",0);
+                temp_u8 = getNumber_u8();
+                
+                print_string("User elected to light fuse: ",0);
+                print_unsigned_decimal(temp_u8,LF);
+                
+                ignite_fuse (&tim, &fus, temp_u8);
 
+                while (tim.timer_100ms_cntr < FUSE_100MS_TICKS_TIMEOUT);
+                anlg_sw_all_off();
 
+                tim.timer_100ms_running = false;
+                tim.timer_100ms_cntr = 0;
+
+            break;
 
             case 99:
                 ResetTerminal();              //Leaving menu, so clear the screen so not to confuse user
-                blockingDelay10ms(1);
+                HAL_Delay(1);
+                // blockingDelay10ms(1);
                 CursorTopLeft();        //Make sure the cursor is in the Top Left position
-                blockingDelay10ms(1);
+                HAL_Delay(1);
+                // blockingDelay10ms(1);
                 usr_number_u8 = 99;
             break;
 

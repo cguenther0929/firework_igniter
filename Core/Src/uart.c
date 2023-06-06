@@ -7,6 +7,8 @@
 #include "uart.h"
 
 struct UARTMembers uart;
+fuse         fus;               // Struct for all things fuse related
+timing       tim;               // Struct for all things timing related
 
 void print_float (float number, uint8_t action) {
     char temp_buffer[8];        //Define the array that will hold the ASCII values
@@ -94,7 +96,7 @@ void print_string(const char * s, uint8_t action) {
 
 }
 
-void PrintUnsignedDecimal (uint16_t number, uint8_t action) {
+void print_unsigned_decimal (uint16_t number, uint8_t action) {
     char temphex[5];        //Define the array that will hold the ASCII values
     char c = '\r';
     uint8_t i;                
@@ -194,8 +196,9 @@ void HandleByte( void ) {
 
         case(SOFRXED):                                   //Now we should be looking at the ID value
             uart.msg_id = uart.rxbuf[uart.consumer_index];
-            IncrementConsumer();          
-            if(uart.msg_id > 0x00 && uart.msg_id <= 0x20) {
+            IncrementConsumer(); 
+            /* Check that a valid ID byte was received */         
+            if(uart.msg_id > 0x00 && uart.msg_id <= 0x02) {
                 uart.msg_state = IDRXED;                        //We have received a valid message ID
             }
             else{
@@ -206,7 +209,7 @@ void HandleByte( void ) {
         case(IDRXED):                                    //Now we should be looking at the length value
             uart.msg_len = uart.rxbuf[uart.consumer_index];
             IncrementConsumer();
-            if(uart.msg_len <= 0x06) {                  //Put some restriction on this so we know data is valid
+            if(uart.msg_len <= 0x01) {                  //Put some restriction on this so we know data is valid
                 uart.msg_state = LENRXED;                        //We have received a valid message ID
             }
             else {
@@ -218,9 +221,6 @@ void HandleByte( void ) {
             if((uart.rxbuf[uart.consumer_index] != FRAMEEND) && uart.len_verify == 0) {          //Still collecting data
                 uart.data_index = uart.consumer_index;            //Define where data starts in queue
             }
-            
-            // else if((uart.rxbuf[uart.consumer_index] != FRAMEEND) && uart.len_verify > 0 && (uart.len_verify < uart.msg_len))
-            
             
             else if((uart.rxbuf[uart.consumer_index] == FRAMEEND) && (uart.len_verify == uart.msg_len)){   //We have reached the EOF framing byte
                 uart.data_end = uart.consumer_index-1;              //Define where data ends in queue
@@ -239,13 +239,59 @@ void HandleByte( void ) {
 
 void ProcessMessage( void ) {
     //TODO this function needs a ton of work 
-    print_string("Process Message.",LF);
+    uint8_t     temp_length_u8      = 0;
+    uint8_t     fuse_number_u8      = 0;
+    uint16_t    fuse_status_u16     = 0x0000;
+    char        txmessage[MAX_TX_ELEMENTS];                      // Used for sending info to the PTE PC
+
+    uart.errorflag = false;                         // Make sure this is reset
+    temp_length_u8 = uart.msg_len;                      // Represents number of bytes in data field only
+
+    switch(uart.msg_id){
+        case(ID_FUSESTATUS):
+            fuse_status_u16 = get_status_all_fuses(&fus);
+
+            memset(txmessage,0xFF,MAX_TX_ELEMENTS);                             //"Null" out the array -- 0xFF is forbidden
+			txmessage[0]= TXSOF;
+			txmessage[1]= uart.msg_id;
+			txmessage[2]= 0x02;                                                 // Length of the message in bytes (not including EOF)
+			txmessage[3]= (uint8_t)((fuse_status_u16 >> 8) & 0xFF);
+			txmessage[4]= (uint8_t)(fuse_status_u16 & 0xFF);
+			txmessage[5]= FRAMEEND;
+			xbee_tx(txmessage);
+        
+        break;
+
+        case(ID_IGNITE_FUSE):
+            xbee_send_ack();
+
+            /**
+             * @brief 
+             * 
+             */
+			fuse_number_u8 = 0;
+            while(temp_length_u8 > 0){
+                fuse_number_u8 = (uart.rxbuf[uart.data_index] * Pow10LU(temp_length_u8-1)) + fuse_number_u8;        
+                (uart.data_index >= MAX_RX_BUF_INDEX) ? (uart.data_index = 0):(uart.data_index++);                        
+                temp_length_u8--;
+            }
+            
+            ignite_fuse (&tim, &fus, fuse_number_u8);
+        
+        
+        break;
+
+        default:
+            print_string("Process Message Error.",LF);
+    
+    }
+
 }
 
-void SendACK( void ){
+void xbee_send_ack( void ){
     const char ACK[4] = {0xF2,0x00,0xF6,0xFF};     //0xFF is a terminator, and thus is not transmitted
     xbee_tx(ACK);                                 //Send ACK to the PTE PC
-} /* End of SendACK */
+} /* End of xbee_send_ack */
 
 void IncrementConsumer( void ) {
     uart.consumer_index >= MAX_RX_BUF_INDEX ? (uart.consumer_index = 0):(uart.consumer_index++);                        // Either roll over or increment the "consumer" pointer
@@ -253,9 +299,25 @@ void IncrementConsumer( void ) {
 } /* End of IncrementConsumer */
 
 void xbee_tx(const char *y){
+    char c = '\0';
+    
     while(*y != 0xFF)
     {
-        HAL_UART_Transmit(&huart2, (uint8_t *) &y, (uint16_t) 0x01, HAL_MAX_DELAY);
+        c = *y;
+        // HAL_UART_Transmit(&huart2, (uint8_t *) &y, (uint16_t) 0x01, HAL_MAX_DELAY);  //TODO this is the line we want back in!
+        HAL_UART_Transmit(&huart1, (uint8_t *) &c, (uint16_t) 0x01, HAL_MAX_DELAY);     //TODO send to console port (for testing)
         y++;                           //Increment the pointer memory address
     }
 } /* End of xbee_tx */
+
+uint8_t Pow10LU(uint8_t power){
+    uint8_t rtnval;               //Created to fix a compiler warning
+    if(power > 2){
+        uart.errorflag = true;
+    }
+    else {
+        const uint8_t Lookup[3] = {1,10,100};
+        return (Lookup[power]);
+    }
+    return(1);      //Return 1 to prevent compiler warning
+}

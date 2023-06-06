@@ -42,10 +42,20 @@ extern "C" {
 /* Exported types ------------------------------------------------------------*/
 /* USER CODE BEGIN ET */
 
+typedef struct fuse {
+    
+  uint16_t  fuse_current_u16;                           // Fuse current value in mA
+    
+} fuse;
+
 /* USER CODE END ET */
 
 /* Exported constants --------------------------------------------------------*/
 /* USER CODE BEGIN EC */
+#define DEFAULT_FUSE_CURRENT_MA     50                  // Default fuse current in mA //TODO need to set this to something reasonable
+#define CHECK_VALUE_FUSE_CURRENT_MA 300
+#define GOOD_FUSE_MV_THRESHOLD      80                  // Voltage threshold in mA
+#define FUSE_100MS_TICKS_TIMEOUT    20                  // Number of 100ms counts before shutting active fuses off
 
 /* USER CODE END EC */
 
@@ -58,7 +68,11 @@ extern "C" {
 void Error_Handler(void);
 
 /* USER CODE BEGIN EFP */
+//TODO need to comment
+void igniter_initialize(fuse * fus);
 
+//TODO need to comment
+void ignite_fuse (timing * tim, fuse * fus, uint8_t fuse_number_u8);
 
 /**
  * FUNCTION:  void blockingDelay10ms( uint16_t ticks )
@@ -72,7 +86,7 @@ void Error_Handler(void);
  *
  * returns: Nothing 
  */
-void blockingDelay10ms( uint16_t ticks );
+// void blockingDelay10ms( uint16_t ticks );
 
 /**
  * FUNCTION:  void blockingDelay100ms( uint16_t ticks )
@@ -86,7 +100,11 @@ void blockingDelay10ms( uint16_t ticks );
  *
  * returns: Nothing 
  */
-void blockingDelay100ms( uint16_t ticks );
+// void blockingDelay100ms( uint16_t ticks );
+
+
+//TODO NEED TO COMMENT
+uint16_t get_status_all_fuses(fuse * fus);
 
 /* USER CODE END EFP */
 

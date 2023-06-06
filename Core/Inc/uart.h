@@ -12,6 +12,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdbool.h>
+#include "main.h"
 
 #include "stm32f1xx_hal.h"
 extern UART_HandleTypeDef huart1;
@@ -28,8 +29,9 @@ extern UART_HandleTypeDef huart2;
 
 
 /* Message Buffer Sizes */
-#define MAX_RX_BUF_INDEX            32                      // Define array element size 
-#define MAX_ELEMENTS                (MAX_RX_BUF_INDEX + 1)    // Number of elements that can be stored in buffer
+#define MAX_TX_ELEMENTS             16                          // Maximum size of transmit message
+#define MAX_RX_BUF_INDEX            32                          // Define array element size 
+#define MAX_ELEMENTS                (MAX_RX_BUF_INDEX + 1)      // Number of elements that can be stored in buffer
 
 /* Message IDs */
 #define ID_FUSESTATUS               0x01
@@ -87,13 +89,13 @@ void print_float (float number, uint8_t action);
 void print_string(const char * s, uint8_t action);
 
 /*
- * Function: void PrintUnsignedDecimal (uint16_t number, uint8_t action)
+ * Function: void print_unsigned_decimal (uint16_t number, uint8_t action)
  * --------------------
  * Print an unsigned decimal value
  *
  * returns: Nothing 
  */
-void PrintUnsignedDecimal (uint16_t number, uint8_t action);
+void print_unsigned_decimal (uint16_t number, uint8_t action);
 
 /**
  * FUNCTION: void print_16b_binary_rep (uint16_t number, uint8_t action)
@@ -190,6 +192,9 @@ void ClearLine( void );
  */
 void ResetRxBuffer( void );
 
+//TODO need to comment
+void IncrementConsumer( void ); 
+
 //TODO need to comment 
 void HandleByte( void );
 
@@ -205,7 +210,13 @@ void HandleByte( void );
  */
 void ProcessMessage( void ); 
 
-//TODO need to cleanup
+//TODO need to comment
+void xbee_send_ack( void );
+
+//TODO need to comment
 void xbee_tx(const char *y);
+
+//TODO need to comment
+uint8_t Pow10LU(uint8_t power);
 
 #endif /* INC_UART_H_ */

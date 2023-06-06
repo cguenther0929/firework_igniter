@@ -1,4 +1,4 @@
-Core/Src/uart.o: ../Core/Src/uart.c ../Core/Inc/uart.h \
+Core/Src/uart.o: ../Core/Src/uart.c ../Core/Inc/uart.h ../Core/Inc/main.h \
  ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal.h \
  ../Core/Inc/stm32f1xx_hal_conf.h \
  ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_rcc.h \
@@ -29,9 +29,13 @@ Core/Src/uart.o: ../Core/Src/uart.c ../Core/Inc/uart.h \
  ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_spi.h \
  ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_tim.h \
  ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_tim_ex.h \
- ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_uart.h
+ ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_uart.h \
+ ../Core/Inc/timer.h ../Core/Inc/uart.h ../Core/Inc/console.h \
+ ../Core/Inc/dac.h ../Core/Inc/max14662.h ../Core/Inc/ad7888.h
 
 ../Core/Inc/uart.h:
+
+../Core/Inc/main.h:
 
 ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal.h:
 
@@ -94,3 +98,15 @@ Core/Src/uart.o: ../Core/Src/uart.c ../Core/Inc/uart.h \
 ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_tim_ex.h:
 
 ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_uart.h:
+
+../Core/Inc/timer.h:
+
+../Core/Inc/uart.h:
+
+../Core/Inc/console.h:
+
+../Core/Inc/dac.h:
+
+../Core/Inc/max14662.h:
+
+../Core/Inc/ad7888.h:

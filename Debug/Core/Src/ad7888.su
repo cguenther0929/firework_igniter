@@ -1,2 +1,2 @@
 ad7888.c:18:6:init_ad7888	16	static
-ad7888.c:24:7:get_voltage	40	static
+ad7888.c:24:7:get_voltage_mv	40	static

@@ -23,11 +23,6 @@
 
 extern SPI_HandleTypeDef hspi1;     //TODO this is good
 
-
-
-
-
-
 typedef struct ad7888 {
     
   uint8_t     last_channel_sampled;           // How many multiples of 10ms has passes since last reading
@@ -60,7 +55,7 @@ typedef struct ad7888 {
  * data resolution.
  */
 #define A2D_VOLTAGE_PER_BIT             (float)(0.000610352)
-#define CS_HAL_DELAY_uS                 5    
+#define CS_HAL_DELAY_mS                 1    
 
 
 /**
@@ -101,7 +96,10 @@ typedef struct ad7888 {
 */
 void init_ad7888 (ad7888 * a2d);
 
-float get_voltage (ad7888 * a2d, uint8_t channel);
+//TODO need to comment
+//TODO voltage value returned is in mV
+
+float get_voltage_mv (ad7888 * a2d, uint8_t channel);
 
 /**
  * TODO need to comment 

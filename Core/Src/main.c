@@ -26,9 +26,11 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-struct timing       time;
+// struct timing       time;
 struct UARTMembers  uart; 
 ad7888              a2d;    
+fuse                fus;
+timing              tim;
 
 /* USER CODE END PTD */
 
@@ -96,15 +98,10 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
-  time.led_fast_blink = false;
-  time.flag_10ms_tick = false;
-  time.flag_100ms_tick = false;
-  time.flag_500ms_tick = false;
-  time.ticks10ms = 0;
-  time.ticks100ms = 0;
-  time.ticks500ms = 0;
 
   init_ad7888 (&a2d); 
+  init_timer (&tim);
+  igniter_initialize(&fus);
 
   /* USER CODE END Init */
 
@@ -163,25 +160,27 @@ int main(void)
         ProcessMessage();
     }
 
+    if(tim.timer_100ms_running && ((tim.timer_100ms_cntr) >= FUSE_100MS_TICKS_TIMEOUT)) {
+      anlg_sw_all_off();
+      tim.timer_100ms_running = false;
+      tim.timer_100ms_cntr = 0;
+    }
 
 
-	  if(time.flag_10ms_tick) {
-		  time.flag_10ms_tick = false;
-      //TODO need to remove
-      // if(uart.rxchar == 'z') {
-      //   MainMenu();
-      //   uart.rxchar = '\0';
-      // }
+	  if(tim.flag_10ms_tick) {
+		  tim.flag_10ms_tick = false;
 	  }
 
-	  if(time.flag_100ms_tick) {
-	      time.flag_100ms_tick = false;
+	  if(tim.flag_100ms_tick) {
+	      tim.flag_100ms_tick = false;
 	  }
 
-	    if(time.flag_500ms_tick) {
-	      time.flag_500ms_tick = false;
+	    if(tim.flag_500ms_tick) {
+	      tim.flag_500ms_tick = false;
 	      HAL_GPIO_TogglePin(HLTH_LED_GPIO_Port, HLTH_LED_Pin);
-        print_string(".",0);
+        
+        // TODO we may want to turn this back on
+        // print_string(".",0);
 
 	    }
 
@@ -562,32 +561,161 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+
+/********************************************//**
+ *  @brief Initialize timer events 
+ ***********************************************/
+void init_timer (timing * tim) {
+  tim -> led_fast_blink = false;
+  tim -> flag_10ms_tick = false;
+  tim -> flag_100ms_tick = false;
+  tim -> flag_500ms_tick = false;
+  tim -> ticks10ms = 0;
+  tim -> ticks100ms = 0;
+  tim -> ticks500ms = 0;
+
+  tim -> timer_100ms_running = false;
+  tim -> timer_100ms_cntr = 0;
+
+}
+
+/********************************************//**
+ *  @brief Ignite a fuse  
+ ***********************************************/
+void ignite_fuse (timing * tim, fuse * fus, uint8_t fuse_number_u8) {
+  float temp_float;
+  uint16_t dac_data_value;
+
+  /**
+   * Start the timer so the fuse driver
+   * shuts off after so many
+   * mili-seconds
+   */
+  tim -> timer_100ms_cntr = 0;
+  tim -> timer_100ms_running = true;
+
+  /**
+   * Set the DAC value appropriately
+   */
+  temp_float = (float)(fus -> fuse_current_u16/1000.0*0.5);  
+  dac_data_value = get_dac_data_value(temp_float);
+  HAL_DAC_SetValue(&hdac, DAC_CHANNEL_1, DAC_ALIGN_12B_R, (uint32_t)dac_data_value);
+
+  /**
+   * Make sure other fuse channels
+   * are first turned off 
+   */
+  anlg_sw_all_off ();
+
+  /**
+   * Turn on the appropriate 
+   * analog switch
+   */
+  set_anlg_sw_on(fuse_number_u8);
+
+
+}
+
+/********************************************//**
+ *  @brief Get fuse status
+ ***********************************************/
+uint16_t get_status_all_fuses(fuse * fus) {
+  uint16_t  temp_fuse_current_u16;
+  uint16_t  dac_data_value;
+  float     temp_float;
+  uint16_t  fuse_status_u16 = 0x0000;
+  uint8_t   counter_u8;
+
+  /**
+   * Retrieve the current fuse current
+   * setting so the value can be 
+   * restored before leaving this funciton
+   */
+  temp_fuse_current_u16 = fus -> fuse_current_u16;
+
+  /**
+   * Set the fuse current to a low value
+   * so as to not set off fireworks while
+   * checking the fuse.  Fuse current value
+   * is in mA, so must first divide by 1000
+   * before multiplying by 0.5 to determine 
+   * DAC voltage.
+   */
+  fus -> fuse_current_u16 = CHECK_VALUE_FUSE_CURRENT_MA;
+  temp_float = (float)(fus -> fuse_current_u16/1000.0*0.5);  
+
+  dac_data_value = get_dac_data_value(temp_float);
+  HAL_DAC_SetValue(&hdac, DAC_CHANNEL_1, DAC_ALIGN_12B_R, (uint32_t)dac_data_value);
+
+  /**
+   * Cycle through the fuses to see 
+   * which are valid and which are not 
+   */
+  for(counter_u8 = 1; counter_u8 < 17; counter_u8++){
+    set_anlg_sw_on (counter_u8);
+    temp_float = get_voltage_mv (&a2d, counter_u8);
+    
+    if(temp_float > GOOD_FUSE_MV_THRESHOLD) {
+      fuse_status_u16 |= (1 << (counter_u8 - 1));
+    }
+
+    anlg_sw_all_off();
+  }
+
+
+  /**
+   * Return the DAC value back to what it was
+   * when entering this function 
+   */
+  fus -> fuse_current_u16 = temp_fuse_current_u16;
+  temp_float = (float)(fus -> fuse_current_u16/1000.0*0.5);  
+
+  dac_data_value = get_dac_data_value(temp_float);
+  HAL_DAC_SetValue(&hdac, DAC_CHANNEL_1, DAC_ALIGN_12B_R, (uint32_t)dac_data_value);
+
+  return fuse_status_u16;
+  
+}
+
+/********************************************//**
+ *  @brief Initalize fuse ignition parameters
+ ***********************************************/
+void igniter_initialize(fuse * fus){
+  fus -> fuse_current_u16 = DEFAULT_FUSE_CURRENT_MA;  
+}
+
 /********************************************//**
  *  @brief Handle Timer Interrupts 
  ***********************************************/
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 	if(htim == &htim6){
-			time.flag_10ms_tick = true;
+			tim.flag_10ms_tick = true;
 
-		 if(time.ticks10ms == 9) {
-		   time.ticks10ms = 0;
-		   time.flag_100ms_tick = true;
+		 if(tim.ticks10ms == 9) {
+		   tim.ticks10ms = 0;
+		   tim.flag_100ms_tick = true;
+       if(tim.timer_100ms_running) {
+        tim.timer_100ms_cntr++;
+       }
+       else {
+        tim.timer_100ms_cntr = 0;
+       }
 
-		   if(time.ticks100ms == 4) {
-			 time.ticks100ms = 0;
-			 time.flag_500ms_tick = true;
+		   if(tim.ticks100ms == 4) {
+			 tim.ticks100ms = 0;
+			 tim.flag_500ms_tick = true;
 
-			 if(time.ticks500ms == 119)										// One minute worth of half seconds
-			   time.ticks500ms = 0;
+			 if(tim.ticks500ms == 119)										// One minute worth of half seconds
+			   tim.ticks500ms = 0;
 			 else
-			   time.ticks500ms += 1;
+			   tim.ticks500ms += 1;
 		   }
 		   else {
-			   time.ticks100ms += 1;
+			   tim.ticks100ms += 1;
 		   }
 		 }
 		 else {
-		   time.ticks10ms += 1;
+		   tim.ticks10ms += 1;
 		 }
 
 		}
@@ -622,26 +750,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
 	}
 }
 
-/********************************************//**
- *  @brief Blocking delay -- 10ms increments  
- ***********************************************/
-void blockingDelay10ms( uint16_t ticks ) {
-    uint16_t i = 0;
-    uint16_t tick = 0;  //Used to lock time value
-    for(i = ticks; i > 0; i--) {
-        tick = time.ticks10ms;
-        while (tick == time.ticks10ms);  //Wait for timer to advance
-    }
-}
 
-void blockingDelay100ms( uint16_t ticks ) {
-    uint16_t i = 0;
-    uint16_t tick = 0;  //Used to lock time value
-    for(i = ticks; i > 0; i--) {
-        tick = time.ticks100ms;
-        while (tick == time.ticks100ms);
-    }
-}
 
 
 
