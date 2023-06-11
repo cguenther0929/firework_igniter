@@ -209,7 +209,7 @@ void HandleByte( void ) {
         case(IDRXED):                                    //Now we should be looking at the length value
             uart.msg_len = uart.rxbuf[uart.consumer_index];
             IncrementConsumer();
-            if(uart.msg_len <= 0x01) {                  //Put some restriction on this so we know data is valid
+            if(uart.msg_len <= 0x05) {                  //Put some restriction on this so we know data is valid
                 uart.msg_state = LENRXED;                        //We have received a valid message ID
             }
             else {
@@ -238,7 +238,6 @@ void HandleByte( void ) {
 } /* End of HandleByte */
 
 void ProcessMessage( void ) {
-    //TODO this function needs a ton of work 
     uint8_t     temp_length_u8      = 0;
     uint8_t     fuse_number_u8      = 0;
     uint16_t    fuse_status_u16     = 0x0000;
@@ -290,7 +289,7 @@ void ProcessMessage( void ) {
 
 void xbee_send_ack( void ){
     const char ACK[4] = {0xF2,0x00,0xF6,0xFF};     //0xFF is a terminator, and thus is not transmitted
-    xbee_tx(ACK);                                 //Send ACK to the PTE PC
+    xbee_tx(ACK);                                 
 } /* End of xbee_send_ack */
 
 void IncrementConsumer( void ) {
@@ -304,8 +303,7 @@ void xbee_tx(const char *y){
     while(*y != 0xFF)
     {
         c = *y;
-        // HAL_UART_Transmit(&huart2, (uint8_t *) &y, (uint16_t) 0x01, HAL_MAX_DELAY);  //TODO this is the line we want back in!
-        HAL_UART_Transmit(&huart1, (uint8_t *) &c, (uint16_t) 0x01, HAL_MAX_DELAY);     //TODO send to console port (for testing)
+        HAL_UART_Transmit(&huart2, (uint8_t *) &c, (uint16_t) 0x01, HAL_MAX_DELAY);  
         y++;                           //Increment the pointer memory address
     }
 } /* End of xbee_tx */

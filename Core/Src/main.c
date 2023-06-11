@@ -99,9 +99,6 @@ int main(void)
 
   /* USER CODE BEGIN Init */
 
-  init_ad7888 (&a2d); 
-  init_timer (&tim);
-  igniter_initialize(&fus);
 
   /* USER CODE END Init */
 
@@ -129,6 +126,18 @@ int main(void)
   MX_USART2_UART_Init();
   MX_TIM6_Init();
   /* USER CODE BEGIN 2 */
+
+  init_ad7888 (&a2d); 
+  init_timer (&tim);
+  igniter_initialize(&fus);
+
+  HAL_GPIO_WritePin(EXT_LED_1_GPIO_Port, EXT_LED_1_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(EXT_LED_2_GPIO_Port,EXT_LED_2_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(EXT_LED_3_GPIO_Port,EXT_LED_3_Pin, GPIO_PIN_RESET);
+
+  // Verify the XBEE module is awake and not in reset
+  HAL_GPIO_WritePin(XB_ON_GPIO_Port,XB_ON_Pin, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(XB_RST_n_GPIO_Port,XB_RST_n_Pin, GPIO_PIN_SET);
 
 
   // Must use Base Start IT if using interrupts
@@ -162,8 +171,10 @@ int main(void)
 
     if(tim.timer_100ms_running && ((tim.timer_100ms_cntr) >= FUSE_100MS_TICKS_TIMEOUT)) {
       anlg_sw_all_off();
+      fus.fuse_lighting_bool = false;
       tim.timer_100ms_running = false;
       tim.timer_100ms_cntr = 0;
+
     }
 
 
@@ -173,14 +184,28 @@ int main(void)
 
 	  if(tim.flag_100ms_tick) {
 	      tim.flag_100ms_tick = false;
-	  }
+        if(fus.fuse_lighting_bool) {
+	        HAL_GPIO_TogglePin(EXT_LED_2_GPIO_Port, EXT_LED_2_Pin); // External RED LED
+        }
+        else {
+          HAL_GPIO_WritePin(EXT_LED_2_GPIO_Port,EXT_LED_2_Pin, GPIO_PIN_RESET);
+        }
+        
+        /* If all fuses are bad, illuminate the amber LED */
+	      if(fus.all_fuses_bad_bool){
+          HAL_GPIO_TogglePin(EXT_LED_3_GPIO_Port, EXT_LED_3_Pin); // External Amber LED
+        }
+        else {
+          HAL_GPIO_WritePin(EXT_LED_3_GPIO_Port, EXT_LED_3_Pin, GPIO_PIN_RESET);
+        }
+	  
+    }
 
 	    if(tim.flag_500ms_tick) {
 	      tim.flag_500ms_tick = false;
-	      HAL_GPIO_TogglePin(HLTH_LED_GPIO_Port, HLTH_LED_Pin);
-        
-        // TODO we may want to turn this back on
-        // print_string(".",0);
+	      HAL_GPIO_TogglePin(HLTH_LED_GPIO_Port, HLTH_LED_Pin);   // Board LED
+	      HAL_GPIO_TogglePin(EXT_LED_1_GPIO_Port, EXT_LED_1_Pin); // External GRN LED
+      
 
 	    }
 
@@ -593,6 +618,7 @@ void ignite_fuse (timing * tim, fuse * fus, uint8_t fuse_number_u8) {
    */
   tim -> timer_100ms_cntr = 0;
   tim -> timer_100ms_running = true;
+  fus -> fuse_lighting_bool = true;
 
   /**
    * Set the DAC value appropriately
@@ -625,6 +651,7 @@ uint16_t get_status_all_fuses(fuse * fus) {
   float     temp_float;
   uint16_t  fuse_status_u16 = 0x0000;
   uint8_t   counter_u8;
+  bool      temp_all_fuses_bad_b = true;
 
   /**
    * Retrieve the current fuse current
@@ -655,12 +682,20 @@ uint16_t get_status_all_fuses(fuse * fus) {
     set_anlg_sw_on (counter_u8);
     temp_float = get_voltage_mv (&a2d, counter_u8);
     
-    if(temp_float > GOOD_FUSE_MV_THRESHOLD) {
+    if(temp_float > GOOD_FUSE_MV_THRESHOLD) {     // Fuse is good
       fuse_status_u16 |= (1 << (counter_u8 - 1));
+      if(temp_all_fuses_bad_b) {
+        temp_all_fuses_bad_b = false;
+      }
     }
 
     anlg_sw_all_off();
   }
+
+  /**
+   * Update all fuses bad status
+   */
+  fus -> all_fuses_bad_bool = temp_all_fuses_bad_b;
 
 
   /**
@@ -682,6 +717,8 @@ uint16_t get_status_all_fuses(fuse * fus) {
  ***********************************************/
 void igniter_initialize(fuse * fus){
   fus -> fuse_current_u16 = DEFAULT_FUSE_CURRENT_MA;  
+  fus -> fuse_lighting_bool = false;
+  fus -> all_fuses_bad_bool = false;
 }
 
 /********************************************//**
@@ -749,10 +786,6 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
 		HAL_UART_Receive_IT(&huart2, &uart.rxchar, 1);
 	}
 }
-
-
-
-
 
 /* USER CODE END 4 */
 

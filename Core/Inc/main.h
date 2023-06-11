@@ -45,6 +45,9 @@ extern "C" {
 typedef struct fuse {
     
   uint16_t  fuse_current_u16;                           // Fuse current value in mA
+  
+  bool      all_fuses_bad_bool;                              // This flag will be set if all fuses are bad
+  bool      fuse_lighting_bool;                         // Flag is set when fuse is lighting
     
 } fuse;
 
