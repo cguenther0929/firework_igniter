@@ -15,8 +15,9 @@
 #include "main.h"
 
 #include "stm32f1xx_hal.h"
-extern UART_HandleTypeDef huart1;
-extern UART_HandleTypeDef huart2;
+extern UART_HandleTypeDef   huart1;
+extern UART_HandleTypeDef   huart2;
+extern DAC_HandleTypeDef    hdac;
 
 // ToDO Cleanup comment blocks and header def
 // TODO see console.c or .h
@@ -36,6 +37,8 @@ extern UART_HandleTypeDef huart2;
 /* Message IDs */
 #define ID_FUSESTATUS               0x01
 #define ID_IGNITE_FUSE              0x02
+#define ID_SET_FUSE_CURRENT         0x03
+#define ID_GET_FUSE_CURRENT         0x04
 
 
 /* Message Framing */
@@ -218,5 +221,8 @@ void xbee_tx(const char *y);
 
 //TODO need to comment
 uint8_t Pow10LU(uint8_t power);
+
+//TODO need to comment
+void dec_to_bcd(uint32_t in_val, char bcd_array[], uint8_t * pSizeBCD);
 
 #endif /* INC_UART_H_ */

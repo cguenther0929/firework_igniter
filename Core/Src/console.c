@@ -32,7 +32,6 @@ uint8_t getNumber_u8 ( void ) {
         if(uart.rxchar == ENTER_KEY) break;
 
         HAL_Delay(100);          // Delay in ms 
-        // blockingDelay100ms(1);  //TODO okay to remove?
         timeout++;
     }
 

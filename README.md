@@ -16,3 +16,5 @@ v0.0.2 -- Implementation of UART buffering for the XBEE module has been complete
 v1.0.0 -- This version has been tested with a PC (running the v1.0.0 python application), in which commands were exchanged over a USB cable.  Fuse check functionality is working well.  This version is suitable for running a show.  
 
 v1.0.1 -- Minor code updates to redirect UART 2 output to the XBee wireless module.  Fixed bug where fuse values higher than 9 (multi-digit) couldn't be ignited.  Successfully tested with wireless controller.  
+
+v1.2.0 -- Software has been updated to support setting or reporting the fuse-current value over the wireless protocol.  These features have been successfully tested against the controller.

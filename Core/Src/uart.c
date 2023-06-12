@@ -198,7 +198,7 @@ void HandleByte( void ) {
             uart.msg_id = uart.rxbuf[uart.consumer_index];
             IncrementConsumer(); 
             /* Check that a valid ID byte was received */         
-            if(uart.msg_id > 0x00 && uart.msg_id <= 0x02) {
+            if(uart.msg_id > 0x00 && uart.msg_id <= 0x06) {
                 uart.msg_state = IDRXED;                        //We have received a valid message ID
             }
             else{
@@ -239,9 +239,15 @@ void HandleByte( void ) {
 
 void ProcessMessage( void ) {
     uint8_t     temp_length_u8      = 0;
+    uint8_t     i                   = 0;
+    uint8_t     array_size_u8       = 0;
     uint8_t     fuse_number_u8      = 0;
+    uint16_t    dac_data_value_u16  = 0x0000;
     uint16_t    fuse_status_u16     = 0x0000;
+    uint16_t    tmp_fus_cur_u16    = 0x0000;
+    float       temp_float          = 0.0;
     char        txmessage[MAX_TX_ELEMENTS];                      // Used for sending info to the PTE PC
+    char        bcd_array[5];
 
     uart.errorflag = false;                         // Make sure this is reset
     temp_length_u8 = uart.msg_len;                      // Represents number of bytes in data field only
@@ -265,8 +271,8 @@ void ProcessMessage( void ) {
             xbee_send_ack();
 
             /**
-             * @brief 
-             * 
+             * From the message 
+             * determine which fuse shall be lit 
              */
 			fuse_number_u8 = 0;
             while(temp_length_u8 > 0){
@@ -276,9 +282,45 @@ void ProcessMessage( void ) {
             }
             
             ignite_fuse (&tim, &fus, fuse_number_u8);
-        
+        break;
+
+        /**
+         * Set the fuse current
+         */
+        case(ID_SET_FUSE_CURRENT):
+            xbee_send_ack();
+            /**
+             * From the message 
+             * determine what the fuse
+             * current shall be set to 
+             */
+			tmp_fus_cur_u16 = 0;
+            while(temp_length_u8 > 0){
+                tmp_fus_cur_u16 = (uart.rxbuf[uart.data_index] * Pow10LU(temp_length_u8-1)) + tmp_fus_cur_u16;        
+                (uart.data_index >= MAX_RX_BUF_INDEX) ? (uart.data_index = 0):(uart.data_index++);                        
+                temp_length_u8--;
+            }
+            fus.fuse_current_u16 = tmp_fus_cur_u16;
+        break;
+
+        /**
+         * Report current fuse current 
+         * setting
+         */
+        case(ID_GET_FUSE_CURRENT):
+            memset(txmessage,0xFF,MAX_TX_ELEMENTS);
+            txmessage[0]= TXSOF;
+            txmessage[1]= uart.msg_id;
+            dec_to_bcd(fus.fuse_current_u16, bcd_array, &array_size_u8);            //Convert speed value to BCD
+            txmessage[2]= array_size_u8;
+            for(i=0;i<array_size_u8;i++){
+                txmessage[3+i] = bcd_array[i];
+            }
+            txmessage[3 + array_size_u8] = FRAMEEND;
+            xbee_tx(txmessage);
         
         break;
+
 
         default:
             print_string("Process Message Error.",LF);
@@ -314,8 +356,92 @@ uint8_t Pow10LU(uint8_t power){
         uart.errorflag = true;
     }
     else {
-        const uint8_t Lookup[3] = {1,10,100};
+        const uint8_t Lookup[4] = {1,10,100,1000};
         return (Lookup[power]);
     }
     return(1);      //Return 1 to prevent compiler warning
 }
+
+void dec_to_bcd(uint32_t in_val, char bcd_array[], uint8_t * pSizeBCD){
+    uint8_t i = 0;
+    uint8_t Digits = 1;               //Used to keep track of how many digits are in the number
+    uint32_t test_val = in_val;          //Used to determine how many digits large the BCD value is
+
+    uint8_t Hunthousands = 0x00;       //Used to keep track of the hundred thousands digits
+    uint8_t Tenthousands = 0x00;       //Used to keep track of the ten thousands digits
+    uint8_t Thousands    = 0x00;       //Used to keep track of the thousands digits
+    uint8_t Hundreds     = 0x00;       //Used to keep track of the hundreds digits
+    uint8_t Tens         = 0x00;       //Used to keep track of the tens digits
+    uint8_t Ones         = 0x00;       //Used to keep track of the ones digits
+
+    while(test_val >= 10){           //Determine number of BCD digits
+        test_val = test_val / 10;
+        Digits++;                   //Initialized to zero, thus no need to add one after this
+    }
+
+    for(i = 0; i < 32; i++){        //Perform "if column greater than 5, then increase by 3" operation
+        if(Hunthousands >= 5){
+            Hunthousands = (Hunthousands + 3) & 0x0F;
+        }
+        if(Tenthousands >= 5){
+            Tenthousands = (Tenthousands + 3) & 0x0F;
+        }
+        if(Thousands >= 5){
+            Thousands = (Thousands + 3) & 0x0F;
+        }
+        if(Hundreds >= 5){
+            Hundreds = (Hundreds + 3) & 0x0F;
+        }
+        if(Tens >= 5){
+            Tens = (Tens + 3) & 0x0F;
+        }
+        if(Ones >= 5){
+            Ones = (Ones + 3) & 0x0F;
+        }
+
+        Hunthousands = (uint8_t)((Hunthousands << 1) & 0x0F);                              //Shift hundred thousands to the left by one bit
+        Hunthousands = (uint8_t)((Hunthousands | ((Tenthousands >> 3) & 0x01)) & 0x0F);    //Replace hundred thousands[0] with ten thousands[3]
+
+        Tenthousands = (uint8_t)((Tenthousands << 1) & 0x0F);                              //Shift ten thousands to the left by one bit
+        Tenthousands = (uint8_t)((Tenthousands | ((Thousands >> 3) & 0x01)) & 0x0F);       //Replace ten thousands[0] with thousands[3]
+
+        Thousands = (uint8_t)((Thousands << 1) & 0x0F);                                    //Shift thousands to the left by one bit
+        Thousands = (uint8_t)((Thousands | ((Hundreds >> 3) & 0x01)) & 0x0F);              //Replace thousands[0] with hundreds[3]
+
+        Hundreds = (uint8_t)((Hundreds << 1) & 0x0F);                                      //Shift hundreds to the left by one bit
+        Hundreds = (uint8_t)((Hundreds | ((Tens >> 3) & 0x01)) & 0x0F);                    //Replace hundreds[0] with tens[3]
+
+        Tens = (uint8_t)((Tens << 1) & 0x0F);                                              //Shift tens to the left by one bit
+        Tens = (uint8_t)((Tens | ((Ones >> 3) & 0x01)) & 0x0F);                            //Replace tens[0] with ones[3]
+
+        Ones = (uint8_t)((Ones << 1) & 0x0F);                                              //Shift tens to the left by one bit
+        Ones = (uint8_t)((Ones | ((in_val >> (31-i)) & 0x01)) & 0x0F);                      //Replace ones[0] with input value[MSB - itterations]
+
+    }
+
+    i = 0;
+    if(Digits > 5){                             //Stuff BCD array according based off of the number of digits
+        bcd_array[i] = Hunthousands;
+        i++;
+    }
+    if(Digits > 4){
+        bcd_array[i] = Tenthousands;
+        i++;
+    }
+    if(Digits > 3){
+        bcd_array[i] = Thousands;
+        i++;
+    }
+    if(Digits > 2){
+        bcd_array[i] = Hundreds;
+        i++;
+    }
+    if(Digits > 1){
+        bcd_array[i] = Tens;
+        i++;
+    }
+    bcd_array[i] = Ones;
+    i++;
+
+    *pSizeBCD = i;                  //Point to how many elements are in the BCD array
+} /* End of dec_to_bcd */
