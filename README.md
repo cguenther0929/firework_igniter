@@ -18,3 +18,5 @@ v1.0.0 -- This version has been tested with a PC (running the v1.0.0 python appl
 v1.0.1 -- Minor code updates to redirect UART 2 output to the XBee wireless module.  Fixed bug where fuse values higher than 9 (multi-digit) couldn't be ignited.  Successfully tested with wireless controller.  
 
 v1.2.0 -- Software has been updated to support setting or reporting the fuse-current value over the wireless protocol.  These features have been successfully tested against the controller.
+
+v1.3.0 -- Software has been updated so that the fuse status is transmitted as four different bytes opposed to two.  This was needed because bytes like 0xFF are forbidden.   

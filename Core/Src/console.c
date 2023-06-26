@@ -58,14 +58,11 @@ float getNumber_float( void ) {
         
         if(uart.rxchar == ENTER_KEY) break;
 
-        // blockingDelay100ms(1);       //TODO remove?
         HAL_Delay(100);          // Delay in ms
         timeout++;
     }
 
     sscanf(uart.rxbuf,"%f.3",&number);
-    // print_string("Float Number Enterd: ",LF);
-    // print_float(number, LF);
     
     ResetRxBuffer();
 

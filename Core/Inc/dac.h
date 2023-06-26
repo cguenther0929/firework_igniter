@@ -17,9 +17,6 @@
 #include "stdbool.h"
 #include "stm32f1xx_hal.h"
 
-//TODO remove??
-// extern DAC_HandleTypeDef hdac;
-
 uint16_t get_dac_data_value (float voltage_setting);
 
 

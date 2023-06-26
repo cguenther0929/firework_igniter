@@ -21,28 +21,12 @@
 
 //TODO this file needs a lot of work...
 
-extern SPI_HandleTypeDef hspi1;     //TODO this is good
+extern SPI_HandleTypeDef hspi1;     
 
 typedef struct ad7888 {
     
   uint8_t     last_channel_sampled;           // How many multiples of 10ms has passes since last reading
     
-  //TODO do we want to remove any of the following?  
-//     uint8_t ad4681_buffer[4];       // Each transation will require four bytes (32 bits)
-//     uint16_t voltage_sample;
-//     uint16_t current_sample;
-    
-//     float   voltage_f;
-//     float   current_f;
-//     float   power_f;
-
-//     uint8_t cs_res_index;
-//     float   cs_res_f;           // This value will need to be configured by the user
-//     float   sense_resistors[3];
-
-//     float   run_time_hr;
-//     float   run_time_min;
-
 
 } ad7888;
 

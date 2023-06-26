@@ -13,8 +13,8 @@ uart.c:166:6:InsertLineSeparator	8	static
 uart.c:170:6:ResetRxBuffer	8	static
 uart.c:177:6:HandleByte	8	static
 uart.c:240:6:ProcessMessage	64	static
-uart.c:332:6:xbee_send_ack	16	static
-uart.c:337:6:IncrementConsumer	4	static
-uart.c:342:6:xbee_tx	24	static
-uart.c:353:9:Pow10LU	24	static
-uart.c:365:6:dec_to_bcd	40	static
+uart.c:334:6:xbee_send_ack	16	static
+uart.c:339:6:IncrementConsumer	4	static
+uart.c:344:6:xbee_tx	24	static
+uart.c:355:9:Pow10LU	24	static
+uart.c:367:6:dec_to_bcd	40	static

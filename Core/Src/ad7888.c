@@ -51,11 +51,13 @@ float get_voltage_mv (ad7888 * a2d, uint8_t channel) {
                   );
 
   
-  // print_string("SPI CONFIG DATA: ",0);
-  // print_8b_binary_rep(spi_tx_data[0],LF);
+  if(channel <= 8){
+    HAL_GPIO_WritePin(CH1_8_ADC_CS_n_GPIO_Port, CH1_8_ADC_CS_n_Pin, GPIO_PIN_RESET);  //Drop CS line
+  }
+  else {
+    HAL_GPIO_WritePin(CH9_16_ADC_CS_n_GPIO_Port, CH9_16_ADC_CS_n_Pin, GPIO_PIN_RESET);  //Drop CS line
+  }
 
-
-  HAL_GPIO_WritePin(CH1_8_ADC_CS_n_GPIO_Port, CH1_8_ADC_CS_n_Pin, GPIO_PIN_RESET);  //Drop CS line
   HAL_Delay(CS_HAL_DELAY_mS);
   
   
@@ -102,10 +104,9 @@ float get_voltage_mv (ad7888 * a2d, uint8_t channel) {
     } //END IF
 
 
-
-  HAL_GPIO_WritePin(CH1_8_ADC_CS_n_GPIO_Port, CH1_8_ADC_CS_n_Pin, GPIO_PIN_SET);
-
-
+  HAL_GPIO_WritePin(CH1_8_ADC_CS_n_GPIO_Port, CH1_8_ADC_CS_n_Pin, GPIO_PIN_SET);  //Drop CS line
+  HAL_GPIO_WritePin(CH9_16_ADC_CS_n_GPIO_Port, CH9_16_ADC_CS_n_Pin, GPIO_PIN_SET);  //Drop CS line
+  
   digital_result = (uint16_t)((spi_rx_data[0] << 8) | (spi_rx_data[1]));
 
   // print_string("The digital result: ", 0);
@@ -115,125 +116,3 @@ float get_voltage_mv (ad7888 * a2d, uint8_t channel) {
 
   return voltage;
 }
-
-
-
-// void get_ad4681_samples( ad4681Data * a2d ) {
-//     //TODO the following two lines are in until we 
-//     //TODO we get some official code put together
-//     uint8_t i = 0;
-
-//     for(i=0; i< 250; i++);
-    
-    // HAL_StatusTypeDef ret;
-
-    /**
-     * Get time value to know time 
-     * elapsed between samples
-     * TODO need to define this
-     */
-    // if(!a2d -> first_sample) {
-    //     a2d -> time_us_elapsed = get_us_counter();
-    // }
-    
-    
-    
-    /**
-     *  Grab A and B samples.
-     * In order for low latency p22
-     * in datasheet, need to pulse the 
-     * CS line low before taking the sample.
-     */
-    // HAL_GPIO_WritePin(ADC_SPI1_CSn_GPIO_Port, ADC_SPI1_CSn_Pin, GPIO_PIN_RESET);
-    // HAL_Delay(1);
-    // blocking_us_delay(CS_PULSE_DELAY_uS);      //TODO we want this line back in
-    // HAL_GPIO_WritePin(ADC_SPI1_CSn_GPIO_Port, ADC_SPI1_CSn_Pin, GPIO_PIN_SET);
-    // HAL_Delay(1);
-    // blocking_us_delay(CS_PULSE_DELAY_uS);        //TODO we want this line back in
-
-    /** 
-     * Drop the CS line 
-     * to extract the data.
-     * Extract data, then bring
-     * CS line high again.
-    */
-    // HAL_GPIO_WritePin(ADC_SPI1_CSn_GPIO_Port, ADC_SPI1_CSn_Pin, GPIO_PIN_RESET);
-    // HAL_Delay(1);
-    
-    // ret = HAL_SPI_Receive(&hspi1, (uint8_t *)a2d -> ad4681_buffer, 4, 200);
-    // if(ret != HAL_OK){
-    //     print_string("SPI receive error",LF);
-    // }
-    
-    // HAL_GPIO_WritePin(ADC_SPI1_CSn_GPIO_Port, ADC_SPI1_CSn_Pin, GPIO_PIN_SET);
-    
-    /* Parse into voltage vs. current */
-    // a2d -> voltage_sample = (uint16_t)((a2d -> ad4681_buffer[2] << 8) | (a2d -> ad4681_buffer[3]));
-    // a2d -> current_sample = (uint16_t)((a2d -> ad4681_buffer[1] << 8) | (a2d -> ad4681_buffer[0]));
-
-    /**
-     *  Determine if sign bit
-     * is set for twos complement
-     * start with voltage sample
-     */
-    // if((uint16_t)(a2d -> voltage_sample >> 15 & 0x01) == 1 ) {   
-    //     a2d -> voltage_sample ^= 0xFFFF;      // Invert all bits
-    //     a2d -> voltage_sample += 0x01;        // Add one
-        
-    //     a2d -> voltage_f = (float)(A2D_VOLTAGE_PER_BIT * a2d -> voltage_sample);
-    //     a2d -> voltage_f = (float)(a2d -> voltage_f * VOLTAGE_MEAS_GAIN * -1.0);
-    // }
-    // else {
-    //     a2d -> voltage_f = (float)(A2D_VOLTAGE_PER_BIT * a2d -> voltage_sample);
-    //     a2d -> voltage_f = (float)(a2d -> voltage_f * VOLTAGE_MEAS_GAIN);
-    // }
-
-    /**
-     * Determine current 
-     * draw value
-     */
-    // if((uint16_t)(a2d -> current_sample >> 15 & 0x01) == 1 ) {   
-    //     a2d -> current_sample ^= 0xFFFF;      // Invert all bits
-    //     a2d -> current_sample += 0x01;        // Add one
-
-    //     a2d -> current_f = (float)(a2d -> current_sample * A2D_VOLTAGE_PER_BIT);        // Raw A2D voltage value
-    //     a2d -> current_f = (float)(a2d -> current_f / a2d -> cs_res_f * -1.0);                 // Current = Voltage / Resistance 
-
-    // }
-    // else {
-    //     a2d -> current_f = (float)(a2d -> current_sample * A2D_VOLTAGE_PER_BIT);        // Raw A2D voltage value
-    //     a2d -> current_f = (float)(a2d -> current_f / a2d -> cs_res_f);                 // Current = Voltage / Resistance 
-    // }
-
-    /**
-     * TODO begin test
-     * 
-     */
-    // a2d -> current_f = 1.2;
-    // a2d -> voltage_f = 2.2;
-    /**
-     * TODO end test
-     * 
-     */
-
-    /**
-     * Calculate power 
-     * value 
-     */
-    // a2d -> power_f = (float)(a2d -> current_f * a2d -> voltage_f);
-
-    // a2d -> first_sample = false;
-
-    /**
-     * Start us timer
-     * so the elapsed time
-     * can be calculated the next 
-     * time this function is entered
-    */
-//    start_us_counter();
-    
-
-//}
-
-
-

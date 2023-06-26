@@ -259,10 +259,12 @@ void ProcessMessage( void ) {
             memset(txmessage,0xFF,MAX_TX_ELEMENTS);                             //"Null" out the array -- 0xFF is forbidden
 			txmessage[0]= TXSOF;
 			txmessage[1]= uart.msg_id;
-			txmessage[2]= 0x02;                                                 // Length of the message in bytes (not including EOF)
-			txmessage[3]= (uint8_t)((fuse_status_u16 >> 8) & 0xFF);
-			txmessage[4]= (uint8_t)(fuse_status_u16 & 0xFF);
-			txmessage[5]= FRAMEEND;
+			txmessage[2]= 0x04;                                                 // Length of the message in bytes (not including EOF)
+			txmessage[3]= (uint8_t)((fuse_status_u16 >> 12) & 0x0F);          
+			txmessage[4]= (uint8_t)((fuse_status_u16 >> 8) & 0x0F);
+			txmessage[5]= (uint8_t)((fuse_status_u16 >> 4) & 0x0F);
+			txmessage[6]= (uint8_t)(fuse_status_u16 & 0x0F);
+			txmessage[7]= FRAMEEND;
 			xbee_tx(txmessage);
         
         break;
