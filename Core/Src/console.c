@@ -137,6 +137,8 @@ void MainMenu( void ) {
         print_string("5 --- Get voltage from A2D.",LF);
         print_string("6 --- Get fuse status.",LF);
         print_string("7 --- Ignite a fuse.",LF);
+        InsertLineFeed(1);
+        print_string("8 --- Get SW version information.",LF);
 
 
         
@@ -198,7 +200,6 @@ void MainMenu( void ) {
             case 4:
                 print_string("Turning all analog SW OFF.",LF);
                 anlg_sw_all_off();
-                
             	
             break;
             
@@ -241,6 +242,15 @@ void MainMenu( void ) {
 
                 tim.timer_100ms_running = false;
                 tim.timer_100ms_cntr = 0;
+
+            break;
+
+            case 8:
+                InsertLineFeed(1);
+                InsertLineSeparator();
+                
+                print_string("SW Version:",0);
+                print_string(SW_VER_STR,LF);
 
             break;
 

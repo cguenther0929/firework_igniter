@@ -20,9 +20,13 @@ void init_ad7888 (ad7888 * a2d) {
 
 }
 
-
+/**
+ * @brief Get mV reading from A2D (channels 1-16)
+ */
+//                         A2D Typedef structure passed in                   
+//                              |        One-based channel number: so 1-16 here  
+//                              |              |
 float get_voltage_mv (ad7888 * a2d, uint8_t channel) {
-
 
 //                          Array position [0]
 //                            | Array position [1]
@@ -49,7 +53,7 @@ float get_voltage_mv (ad7888 * a2d, uint8_t channel) {
                   ((AD7888_NORMAL_POWER >> 1 & 0x01) << AD7888_PM1_BIT_OFFSET) |
                   ((AD7888_NORMAL_POWER & 0x01) << AD7888_PM0_BIT_OFFSET)
                   );
-
+  channel++;  // Increase back to one-based number for remaining processing    
   
   if(channel <= 8){
     HAL_GPIO_WritePin(CH1_8_ADC_CS_n_GPIO_Port, CH1_8_ADC_CS_n_Pin, GPIO_PIN_RESET);  //Drop CS line
@@ -59,9 +63,6 @@ float get_voltage_mv (ad7888 * a2d, uint8_t channel) {
   }
 
   HAL_Delay(CS_HAL_DELAY_mS);
-  
-  
-  
 
   //                          Handle to SPI instance                                              
   //                               |              Pointer to transmit buffer                                                     
@@ -108,9 +109,6 @@ float get_voltage_mv (ad7888 * a2d, uint8_t channel) {
   HAL_GPIO_WritePin(CH9_16_ADC_CS_n_GPIO_Port, CH9_16_ADC_CS_n_Pin, GPIO_PIN_SET);  //Drop CS line
   
   digital_result = (uint16_t)((spi_rx_data[0] << 8) | (spi_rx_data[1]));
-
-  // print_string("The digital result: ", 0);
-  // print_16b_binary_rep(digital_result, LF);
 
   voltage = (float)(digital_result * A2D_VOLTAGE_PER_BIT * 1000); //Value in mV
 

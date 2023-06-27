@@ -55,10 +55,12 @@ typedef struct fuse {
 
 /* Exported constants --------------------------------------------------------*/
 /* USER CODE BEGIN EC */
-#define DEFAULT_FUSE_CURRENT_MA     50                  // Default fuse current in mA //TODO need to set this to something reasonable
+#define SW_VER_STR                  "1.3.1"             // SW Version String
+
+#define DEFAULT_FUSE_CURRENT_MA     50                  // Default fuse current in mA 
 #define CHECK_VALUE_FUSE_CURRENT_MA 300
 #define GOOD_FUSE_MV_THRESHOLD      80                  // Voltage threshold in mA
-#define FUSE_100MS_TICKS_TIMEOUT    20                  // Number of 100ms counts before shutting active fuses off
+#define FUSE_100MS_TICKS_TIMEOUT    30                  // Number of 100ms counts before shutting active fuses off
 
 /* USER CODE END EC */
 

@@ -20,3 +20,5 @@ v1.0.1 -- Minor code updates to redirect UART 2 output to the XBee wireless modu
 v1.2.0 -- Software has been updated to support setting or reporting the fuse-current value over the wireless protocol.  These features have been successfully tested against the controller.
 
 v1.3.0 -- Software has been updated so that the fuse status is transmitted as four different bytes opposed to two.  This was needed because bytes like 0xFF are forbidden.   
+
+v.1.3.1 -- Bug was resolved in A2D reporting routine.  First noticed when the fuse status for channel 9 was being improperly reported.  The channel number was being decremented for an operation requiring a zero-based channel value, but the channel number wasn't getting increased back to a one-based value for the remainder of the routine.  The SW version can now be retrieved over the terminal.    
